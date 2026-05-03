@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Btrety Studio v1.3</title>
+<title>Btrety Studio</title>
 <link rel="icon" href="BtretyCode.png">
 <style>
 :root {
@@ -43,10 +43,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);di
     letter-spacing:normal;
 }
 #editor-container{flex:1;position:relative;overflow:hidden;}
-
-/* * CORREÇÃO NATIVEFIER: CSS Blindado para o cursor não desalinhar
- * Forçando antialiasing e espaçamentos idênticos
- */
+    
 #editor,#hl{
     position:absolute;top:0;left:0;
     margin:0;padding:25px 22px 25px 25px;border:0;
@@ -71,14 +68,12 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);di
 .hl-line{display:block;min-height:var(--lh);}
 .hl-line.hidden{display:none;}
 
-/* Syntax */
 .k{color:var(--kw);font-weight:bold;}
 .s{color:var(--str);}
 .n{color:var(--num);}
 .c{color:var(--cmt);font-style:italic;}
 .tp{color:var(--topic);font-weight:bold;}
 
-/* Right gutter — collapse arrows */
 #right-gutter{
     position:absolute;top:0;right:0;width:16px;
     pointer-events:none;z-index:3;overflow:visible;
