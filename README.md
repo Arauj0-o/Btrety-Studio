@@ -13,15 +13,20 @@ O **Btrety Studio** é um ambiente de desenvolvimento (IDE) leve, projetado para
 - **Código aberto (Open Source)**: Acesse o [código-fonte](https://github.com/Arauj0-o/Btrety-Studio/releases) na aba *Releases* e contribua com o projeto.
 
 ### 📥 Instalação
-1. Baixe o instalador na aba [Releases](https://github.com/Arauj0-o/Btrety-Studio/releases).
-2. Execute o arquivo `Btrety Studio-Setup-1.0.0.exe` e siga as instruções na tela.
-3. **Sobre o atalho**: Caso queira criar um ícone na Área de Trabalho, adicione-o manualmente. Por ser um projeto independente e sem fins lucrativos, o instalador ainda não possui uma Assinatura Digital paga. Por esse motivo, o Windows Defender pode bloquear a criação automática de atalhos por segurança.
+
+**Baixando o aplicativo**:
+1. Instale o Nativefier pelo site oficial: `https://github.com/nativefier/nativefier`
+2. Após instalar, abra o Explorador de Arquivos e crie uma pasta com qualquer nome, clique com o botão direito em "Abrir no Terminal"
+3. Depois de abir o terminal, cole este comando: `nativefier --name "Btrety Studio" "https://arauj0-o.github.io/Btrety-Studio/"`
+4. O arquivo será instalado na pasta que você escolheu.
+
+**Usando pelo navegador**
+
+1. Abra uma nova aba no navegador e cole esse url: `https://arauj0-o.github.io/Btrety-Studio/`
+2. Começe a programar.
 
 ### 📜 Licença e Observações
 Distribuído sob a Licença MIT. Consulte o arquivo `LICENÇA.txt` para obter mais detalhes.
-
-**Nota técnica:** 
-Este aplicativo foi empacotado utilizando o Nativefier para converter a estrutura base em HTML para um aplicativo desktop executável.
 
 ---
 Desenvolvido por **Arauj⌀** | Publicado em 01/05/2026
