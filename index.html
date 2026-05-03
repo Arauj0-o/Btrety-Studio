@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Btrety Studio v1.3</title>
+<link rel="icon" href="BtretyCode.png">
+<style>
+:root {
+    --bg:#121212;--header:#1e1e1e;--accent:#ff8c00;--text:#fff;
+    --kw:#ff8c00;--str:#e06c75;--num:#ccb095;--cmt:#6a737d;
+    --topic:#bd93f9;--menu-bg:#2d2d2d;--ed-bg:#000;--gut:#1a1a1a;
+    --lh:27.2px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* Header (Logo Maior) */
+.header{background:var(--header);display:flex;flex-direction:column;border-bottom:2px solid var(--accent);flex-shrink:0;}
+.top-bar{display:flex;align-items:center;padding:5px 15px;height:60px;gap:12px;}
+.logo-img{height:128px;width:auto;max-width:150px;object-fit:contain;pointer-events:none;}
+.logo-txt{color:var(--accent);font-size:19px;font-weight:bold;letter-spacing:1px;display:none;}
+
+/* Menu */
+.menu-bar{display:flex;padding-left:10px;}
+.menu-item{position:relative;padding:7px 14px;font-size:13px;cursor:pointer;user-select:none;}
+.menu-item:hover{background:rgba(255,255,255,.08);}
+.dropdown{display:none;position:absolute;top:100%;left:0;background:var(--menu-bg);min-width:210px;z-index:200;border:1px solid #444;box-shadow:0 6px 18px rgba(0,0,0,.6);}
+.menu-item:hover .dropdown{display:block;}
+.dd{padding:9px 15px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;color:var(--text);}
+.dd:hover{background:var(--accent);color:#000;}
+.dd-sep{border-top:1px solid #444;margin:3px 0;}
+
+/* Workspace */
+.main-container{display:flex;flex:1;overflow:hidden;min-height:0;}
+#editor-wrapper{flex:1;display:flex;background:var(--ed-bg);overflow:hidden;position:relative;min-width:0;}
+#line-numbers{
+    width:48px;background:var(--gut);color:#454545;
+    padding:25px 6px 25px 0;text-align:right;
+    font-family:'Consolas', 'Courier New', monospace;
+    font-size:17px;line-height:var(--lh);
+    user-select:none;border-right:1px solid #2a2a2a;
+    overflow:hidden;flex-shrink:0;
+    letter-spacing:normal;
+}
+#editor-container{flex:1;position:relative;overflow:hidden;}
+
+/* * CORREÇÃO NATIVEFIER: CSS Blindado para o cursor não desalinhar
+ * Forçando antialiasing e espaçamentos idênticos
+ */
+#editor,#hl{
+    position:absolute;top:0;left:0;
+    margin:0;padding:25px 22px 25px 25px;border:0;
+    width:100%;height:100%;
+    font-family:'Consolas', 'Courier New', monospace;
+    font-size:17px;line-height:var(--lh);
+    white-space:pre;tab-size:4;
+    letter-spacing:normal !important;
+    word-spacing:normal !important;
+    text-transform:none !important;
+    -webkit-font-smoothing: antialiased;
+}
+#editor{
+    color:transparent;background:transparent;caret-color:#fff;
+    resize:none;outline:none;z-index:2;
+    overflow:auto;
+    scrollbar-width:none;
+}
+#editor::-webkit-scrollbar{display:none;}
+#editor::selection{background:rgba(33,110,255,.38);}
+#hl{z-index:1;pointer-events:none;color:#888;overflow:hidden;}
+.hl-line{display:block;min-height:var(--lh);}
+.hl-line.hidden{display:none;}
+
+/* Syntax */
+.k{color:var(--kw);font-weight:bold;}
+.s{color:var(--str);}
+.n{color:var(--num);}
+.c{color:var(--cmt);font-style:italic;}
+.tp{color:var(--topic);font-weight:bold;}
+
+/* Right gutter — collapse arrows */
+#right-gutter{
+    position:absolute;top:0;right:0;width:16px;
+    pointer-events:none;z-index:3;overflow:visible;
+}
+.cb{
+    position:absolute;right:1px;width:13px;height:13px;
+    background:#252525;border:1px solid #383838;
+    color:#555;font-size:8px;cursor:pointer;pointer-events:all;
+    display:flex;align-items:center;justify-content:center;border-radius:2px;
+    line-height:1;
+}
+.cb:hover{background:var(--accent);color:#000;border-color:var(--accent);}
+
+/* Resizer */
+#resizer{width:4px;cursor:col-resize;background:#1a1a1a;flex-shrink:0;}
+#resizer:hover{background:var(--accent);}
+
+/* Console */
+#console-container{min-width:260px;width:36%;background:#000;border-left:1px solid #222;display:flex;flex-direction:column;flex-shrink:0;}
+#console-head{background:#0a0a0a;padding:5px 15px;font-size:11px;color:#444;border-bottom:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;letter-spacing:1px;}
+#console-output{flex:1;padding:14px 18px;font-family:'Consolas',monospace;font-size:14px;overflow-y:auto;color:#ddd;line-height:1.6;}
+#con-in-area{background:#050505;border-top:1px solid #1c1c1c;padding:8px 12px;display:none;align-items:center;gap:8px;}
+#con-in{background:transparent;border:none;color:#fff;outline:none;font-family:'Consolas',monospace;font-size:14px;flex:1;}
+
+/* Modals */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;}
+.modal-overlay.active{display:block;}
+.modal{
+    display:none;position:fixed;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    background:#181818;padding:22px;border:2px solid var(--accent);
+    z-index:1000;width:540px;max-height:84vh;overflow-y:auto;
+    box-shadow:0 0 60px rgba(0,0,0,.95);
+}
+.modal.active{display:block;}
+.modal-h{display:flex;justify-content:space-between;margin-bottom:14px;color:var(--accent);font-weight:bold;border-bottom:1px solid #2d2d2d;padding-bottom:10px;font-size:14px;}
+.modal p{color:#bbb;font-size:13px;line-height:1.7;margin-top:8px;}
+.modal pre{font-size:12px;background:#0e0e0e;padding:10px;color:#aaa;border:1px solid #2a2a2a;white-space:pre-wrap;margin-top:6px;}
+.sec{color:var(--accent);font-size:11px;text-transform:uppercase;font-weight:bold;padding:10px 0 5px;border-bottom:1px solid #2a2a2a;display:block;margin-top:8px;letter-spacing:.8px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;}
+th{text-align:left;color:#555;padding:6px 8px;border-bottom:1px solid #2a2a2a;font-size:11px;text-transform:uppercase;}
+td{padding:7px 8px;border-bottom:1px solid #1e1e1e;color:#bbb;vertical-align:top;}
+td:first-child{color:#50fa7b;font-family:'Consolas',monospace;white-space:nowrap;padding-right:14px;}
+.btn{background:var(--accent);border:none;padding:9px 14px;cursor:pointer;font-weight:bold;color:#000;font-size:13px;margin-top:8px;}
+.btn:hover{opacity:.85;}
+.btn-w{width:100%;display:block;}
+.btn-dark{background:#2a2a2a;color:#ccc;}
+.btn-dark:hover{background:#3a3a3a;opacity:1;}
+
+/* Search bar */
+#search-bar{display:none;position:absolute;top:8px;right:4px;background:#1a1a1a;border:1px solid var(--accent);padding:6px 10px;z-index:300;align-items:center;gap:7px;border-radius:3px;}
+#srch-in{background:#000;border:1px solid #3a3a3a;color:#fff;padding:4px 9px;font-family:'Consolas',monospace;font-size:13px;outline:none;width:175px;}
+#srch-cnt{font-size:11px;color:#555;min-width:55px;}
+.srch-btn{background:#2a2a2a;border:none;color:#aaa;padding:4px 8px;cursor:pointer;font-size:12px;}
+.srch-btn:hover{background:var(--accent);color:#000;}
+
+/* Autocomplete */
+#ac-box{display:none;position:fixed;background:#181818;border:1px solid #3a3a3a;z-index:500;font-family:'Consolas',monospace;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.7);max-width:360px;}
+.ac-item{padding:6px 14px;cursor:pointer;color:#bbb;border-bottom:1px solid #222;}
+.ac-item:last-child{border:none;}
+.ac-item:hover,.ac-item.sel{background:var(--accent);color:#000;}
+.ac-kw{color:var(--kw);}
+.ac-item.sel .ac-kw,.ac-item:hover .ac-kw{color:#000;}
+.ac-hint{color:#555;font-size:11px;margin-left:6px;}
+.ac-item.sel .ac-hint,.ac-item:hover .ac-hint{color:#333;}
+
+/* Tooltip */
+#tip{display:none;position:fixed;background:#1a1a1a;border:1px solid #3a3a3a;padding:9px 13px;font-size:12.5px;color:#bbb;z-index:600;max-width:300px;pointer-events:none;line-height:1.6;border-radius:3px;box-shadow:0 4px 14px rgba(0,0,0,.6);}
+#tip b{color:var(--accent);}
+#tip code{color:#50fa7b;font-family:monospace;display:block;margin-top:4px;font-size:12px;}
+
+/* Color picker */
+.cprow{display:flex;gap:10px;align-items:center;margin-top:10px;}
+#cp{width:70px;height:38px;border:none;background:none;cursor:pointer;}
+#hx{flex:1;padding:8px;background:#000;color:#fff;border:1px solid #333;font-family:monospace;text-align:center;font-size:14px;}
+
+/* Rename rows */
+.rnm-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.rnm-row select,.rnm-row input{background:#0e0e0e;color:#ccc;border:1px solid #333;padding:6px 8px;font-size:13px;outline:none;flex:1;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="top-bar">
+    <img src="BtretyCode.png" class="logo-img" alt="Logo"
+         onerror="this.style.display='none';document.querySelector('.logo-txt').style.display='block'">
+    <span class="logo-txt">Btrety Studio</span>
+  </div>
+  <div class="menu-bar">
+    <div class="menu-item">Arquivo
+      <div class="dropdown">
+        <div class="dd" onclick="novoArquivo()">Novo Arquivo</div>
+        <div class="dd" onclick="abrirArquivo()">Abrir (.Brt)</div>
+        <div class="dd" onclick="abrirModal('m-transpiler')">Abrir...</div>
+        <div class="dd-sep"></div>
+        <div class="dd" onclick="salvarComo()">Salvar como...</div>
+        <div class="dd-sep"></div>
+        <div class="dd" onclick="sairPrograma()" style="color:#e06c75;">Sair</div>
+      </div>
+    </div>
+    <div class="menu-item" onclick="executarBtrety()" style="color:#28a745;font-weight:bold;">Executar</div>
+    <div class="menu-item">Projeto
+      <div class="dropdown">
+        <div class="dd" onclick="abrirModal('m-funcoes')">Tabela de Funções</div>
+        <div class="dd" onclick="abrirModal('m-catalogo')">Catálogo</div>
+        <div class="dd" onclick="abrirModal('m-historico')">Histórico de Execução</div>
+        <div class="dd" onclick="abrirModal('m-variaveis')">Inspecionar Variáveis</div>
+      </div>
+    </div>
+    <div class="menu-item">Ferramentas
+      <div class="dropdown">
+        <div class="dd" onclick="limparConsole()">Limpar Console</div>
+        <div class="dd-sep"></div>
+        <div class="dd" onclick="abrirModal('m-cores')">Paleta de Cores</div>
+        <div class="dd-sep"></div>
+        <div class="dd" onclick="toggleFeat('sugerir')">Sugerir <span id="lbl-sugerir">✓</span></div>
+        <div class="dd" onclick="abrirModal('m-renomear')">Renomear...</div>
+        <div class="dd" onclick="toggleFeat('guia')">Guia de Sintaxe <span id="lbl-guia">✓</span></div>
+      </div>
+    </div>
+    <div class="menu-item">Mais
+      <div class="dropdown">
+        <div class="dd" onclick="abrirModal('m-github')">Verificar Atualizações</div>
+        <div class="dd" onclick="abrirModal('m-sobre')">Sobre</div>
+        <div class="dd" onclick="abrirModal('m-licenca')">Licença</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-container">
+  <div id="editor-wrapper">
+    <div id="line-numbers">1</div>
+    <div id="editor-container">
+      <pre id="hl" aria-hidden="true"><code id="hlc"></code></pre>
+      <div id="right-gutter"></div>
+      <textarea id="editor" spellcheck="false">escrever("§colorhex=#ffee00§Olá, Mundo!")</textarea>
+      <input type="file" id="hidden-file-input" style="display:none;" accept=".Brt,.brt,.py,.java,.cpp">
+      
+      <div id="search-bar">
+        <input id="srch-in" placeholder="Procurar (Aa)" autocomplete="off">
+        <span id="srch-cnt"></span>
+        <button class="srch-btn" onclick="srchMove(-1)">◀</button>
+        <button class="srch-btn" onclick="srchMove(1)">▶</button>
+        <button class="srch-btn" onclick="closeSearch()">✕</button>
+      </div>
+    </div>
+  </div>
+  <div id="resizer"></div>
+  <div id="console-container">
+    <div id="console-head">
+      <span>CONSOLE</span>
+      <span onclick="limparConsole()" style="cursor:pointer;font-size:14px;color:#3a3a3a;">✕</span>
+    </div>
+    <div id="console-output"></div>
+    <div id="con-in-area">
+      <span style="color:var(--accent);font-family:monospace;font-size:14px;">❯</span>
+      <input id="con-in" autocomplete="off">
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="overlay" onclick="fecharModais()"></div>
+
+<div id="ac-box"></div>
+<div id="tip"></div>
+
+<div id="m-confirm" class="modal" style="width:400px; padding: 25px;">
+  <div class="modal-h"><span id="conf-title">Aviso</span><span onclick="fecharConfirmacao(false)" style="cursor:pointer">✕</span></div>
+  <p id="conf-msg" style="margin-bottom:20px; font-size: 14px;">Tem certeza?</p>
+  <div style="display:flex;gap:12px;">
+    <button id="conf-yes" class="btn" style="flex:1" onclick="fecharConfirmacao(true)">Sim</button>
+    <button id="conf-no" class="btn btn-dark" style="flex:1" onclick="fecharConfirmacao(false)">Não</button>
+  </div>
+</div>
+
+<div id="m-funcoes" class="modal">
+  <div class="modal-h"><span>Tabela de Funções — Bcode</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+
+  <span class="sec">Saída</span>
+  <table>
+    <tr><td>escrever("texto")</td><td>Exibe texto no console.</td></tr>
+    <tr><td>escrever("§colorhex=#RRGGBB§texto§§")</td><td>Texto colorido. §§ reseta a cor.</td></tr>
+    <tr><td>escrever("..variavel..")</td><td>exibe o valor da variavel.</td></tr>
+    <tr><td>cor(#RRGGBB)</td><td>Define cor global do texto até mudar novamente.</td></tr>
+    <tr><td>limpar()</td><td>Limpa todo o console.</td></tr>
+  </table>
+
+  <span class="sec">Entrada</span>
+  <table>
+    <tr><td>digitar = (variavel)</td><td>Lê qualquer valor e salva na variável.</td></tr>
+    <tr><td>digitar &lt;a, b, c&gt; = (variavel)</td><td>Só aceita os valores listados. Exibe erro se inválido.</td></tr>
+  </table>
+
+  <span class="sec">Tempo & Data</span>
+  <table>
+    <tr><td>data()</td><td>Exibe hora atual no console.</td></tr>
+    <tr><td>data(registrar=h) variavel</td><td>Guarda a hora (0–23) na variável.</td></tr>
+    <tr><td>data(registrar=d) variavel</td><td>Guarda o dia do mês (1–31) na variável.</td></tr>
+    <tr><td>data(registrar=m) variavel</td><td>Guarda o mês (1–12) na variável.</td></tr>
+    <tr><td>data(registrar=a) variavel</td><td>Guarda o ano (ex: 2026) na variável.</td></tr>
+    <tr><td>esperar(ms)</td><td>Pausa a execução pelo tempo em milissegundos.</td></tr>
+  </table>
+
+  <span class="sec">Variáveis & Cálculo</span>
+  <table>
+    <tr><td>variavel nome = valor</td><td>Cria ou altera uma variável.</td></tr>
+    <tr><td>calc(var = expressão)</td><td>Calcula (+, -, *, /) com suporte a variáveis.</td></tr>
+    <tr><td>..variavel..</td><td>Interpola o valor de uma variável dentro de escrever().</td></tr>
+  </table>
+
+  <span class="sec">Controle de Fluxo</span>
+  <table>
+    <tr><td>se (condição) { }</td><td>Executa o bloco se a condição for verdadeira.</td></tr>
+    <tr><td>senao { }</td><td>Bloco executado quando o se anterior for falso.</td></tr>
+    <tr><td>T1 / T2 / T3...</td><td>Define um marcador de posição no código (label).</td></tr>
+    <tr><td>rT1 / rT2 / rT3...</td><td>Volta ao tópico correspondente (cria um loop).</td></tr>
+  </table>
+
+  <span class="sec">Sistema</span>
+  <table>
+    <tr><td>terminal()</td><td>Modo interativo direto. Digite 'sair' para encerrar.</td></tr>
+    <tr><td>rnm orig=novo; orig2=novo2</td><td>Renomeia funções. Deve ser a última linha do arquivo.</td></tr>
+  </table>
+</div>
+
+<div id="m-sobre" class="modal">
+  <div class="modal-h"><span>Sobre</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <p style="margin-top:14px;font-size:15px;font-weight:bold;color:var(--accent);">Btrety Studio</p>
+  <p>O Btrety Studio utiliza Bcode para programar, a tradução de linguagens está em beta e pode ocorrer erros.</p>
+  <p style="margin-top:12px;"><b style="color:#888;">Versão</b><br><span style="font-size:20px;font-weight:bold;">1.1.0 (Beta 2)</span></p>
+  <p style="margin-top:12px;"><b style="color:#888;">Criador</b><br><span style="font-size:16px;">Arauj⌀</span></p>
+  <p style="margin-top:16px;color:#444;font-size:11px;">Btrety Studio e Btrety OS são marcas registradas de Arauj⌀.</p>
+</div>
+
+<div id="m-licenca" class="modal">
+  <div class="modal-h"><span>Licença de Uso</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <pre>BTRETY STUDIO - LICENÇA DE USO
+
+Copyright (c) 2026 [Arauj⌀]
+
+Pela presente, é concedida permissão, livre de encargos, a qualquer
+pessoa que obtenha uma cópia deste software e dos arquivos de
+documentação associados (Btrety Studio), para lidar com o Software
+sem restrições, incluindo, sem limitação, os direitos de usar, copiar,
+modificar, mesclar, publicar, distribuir, sublicenciar e/ou vender
+cópias do Software, sujeitos às seguintes condições:
+
+1. O aviso de copyright acima e este aviso de permissão devem ser
+   incluídos em todas as cópias ou partes substanciais do Software.
+
+2. O SOFTWARE É FORNECIDO "BTRETY STUDIO", SEM GARANTIA DE QUALQUER
+   TIPO, EXPRESSA OU IMPLÍCITA, INCLUINDO, MAS NÃO SE LIMITANDO ÀS
+   GARANTIAS DE COMERCIALIZAÇÃO, ADEQUAÇÃO A UM DETERMINADO FIM E
+   NÃO INFRAÇÃO.
+
+3. EM NENHUM CASO OS AUTORES OU TITULARES DE COPYRIGHT SERÃO
+   RESPONSÁVEIS POR QUALQUER RECLAMAÇÃO, DANOS OU OUTRA
+   RESPONSABILIDADE, SEJA EM UMA AÇÃO DE CONTRATO, ATO ILÍCITO OU
+   DE OUTRA FORMA, DECORRENTE DE, FORA DE OU EM CONEXÃO COM O
+   SOFTWARE OU O USO OU OUTRAS NEGOCIAÇÕES NO SOFTWARE.
+
+─────────────────────────────────────────────────────────────────
+Nota: Este software utiliza o motor Nativefier (Electron/Chromium).
+Btrety OS e Btrety Studio são marcas registradas de Arauj⌀.</pre>
+</div>
+
+<div id="m-github" class="modal">
+  <div class="modal-h">
+    <span>Atualizar Btrety Studio</span>
+    <span onclick="fecharModais()" style="cursor:pointer">✕</span>
+  </div>
+  
+  <div style="padding: 15px; font-family: sans-serif; line-height: 1.6; color: #333;">
+    <p style="margin-bottom: 10px;">
+      No momento, não é possível atualizar o <strong>Btrety Studio</strong> de forma automatizada. 
+      Para realizar a atualização, acesse o nosso repositório no GitHub e compare a versão mais recente liberada com a versão que você possui instalada.
+    </p>
+    
+    <p style="margin-bottom: 15px;">
+      Para verificar a versão atualmente instalada em sua máquina, acesse o menu <strong>"Mais"</strong> e clique em <strong>"Sobre"</strong>.
+    </p>
+    
+    <a href="https://github.com/Arauj0-o/Btrety-Studio" style="color: #007BFF; text-decoration: none; font-weight: bold;">
+      Acesse o nosso GitHub apenas clicando aqui
+    </a>
+  </div>
+</div>
+
+<div id="m-transpiler" class="modal">
+  <div class="modal-h"><span>Abrir arquvios .java, .py ou .cpp</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <p>Converte Python, Java ou C++ para Bcode automaticamente.</p>
+  <input type="file" id="f-in" accept=".py,.java,.cpp,.Brt,.brt" style="color:#888;margin:14px 0;display:block;font-size:13px;">
+  <button class="btn btn-w" onclick="analisarCodigo()">Traduzir para Bcode</button>
+</div>
+
+<div id="m-cores" class="modal">
+  <div class="modal-h"><span>Paleta de Cores HEX</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <div class="cprow">
+    <input type="color" id="cp" value="#ff8c00"
+           oninput="document.getElementById('hx').value=this.value.toUpperCase()">
+    <input type="text" id="hx" value="#FF8C00" readonly>
+    <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('hx').value).then(()=>alert('Copiado!'))">Copiar</button>
+  </div>
+  <p style="margin-top:14px;font-size:12px;color:#555;">
+    Usar no código: <code style="color:#50fa7b;">§colorhex=#FF8C00§texto§§</code>
+  </p>
+</div>
+
+<div id="m-renomear" class="modal">
+  <div class="modal-h"><span>Renomear Funções</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <p>Crie apelidos para funções neste arquivo. Ficam na última linha como <code style="color:#50fa7b;">rnm orig=novo</code>.</p>
+  <div id="rnm-list"></div>
+  <button class="btn btn-w" onclick="addRnm()" style="margin-top:12px;">+ Adicionar</button>
+  <button class="btn btn-w btn-dark" onclick="aplicarRnm()">Aplicar no Código</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// REFS
+// ═══════════════════════════════════════════
+const editor  = document.getElementById('editor');
+const hlc     = document.getElementById('hlc');
+const lnums   = document.getElementById('line-numbers');
+const cout    = document.getElementById('console-output');
+const cinArea = document.getElementById('con-in-area');
+const cinEl   = document.getElementById('con-in');
+const rg      = document.getElementById('right-gutter');
+const tip     = document.getElementById('tip');
+const acBox   = document.getElementById('ac-box');
+const overlay = document.getElementById('overlay');
+const hiddenFileInput = document.getElementById('hidden-file-input');
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const KEYWORDS = ['escrever','variavel','digitar','limpar','terminal','data','cor','esperar','calc','se','senao','sortear','rnm'];
+const feat = { sugerir: true, guia: true };
+const collapsed = new Map();
+let vars = {}, globalColor = null, resolveInput = null;
+let srchMatches = [], srchIdx = -1;
+let acWord = '', acItems = [];
+
+// Estado de salvamento
+let isSaved = true;
+let lastSavedContent = editor.value;
+let resolveConfirm = null; // Promessa do modal de confirmação
+
+// ═══════════════════════════════════════════
+// MODAL SYSTEM & CONFIRM BOX CUSTOMIZADO
+// ═══════════════════════════════════════════
+function abrirModal(id) {
+    fecharModais();
+    document.getElementById(id).classList.add('active');
+    overlay.classList.add('active');
+    if (id === 'm-historico') renderHist();
+    if (id === 'm-variaveis') renderVars();
+    if (id === 'm-catalogo')  renderCatalogo();
+}
+
+function fecharModais() {
+    document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+    overlay.classList.remove('active');
+    // Se fechou sem responder à promessa do confirm, resolve como false
+    if (resolveConfirm) {
+        resolveConfirm(false);
+        resolveConfirm = null;
+    }
+}
+
+// Modal Assíncrono que substitui o "confirm()"
+function pedirConfirmacao(titulo, mensagem, txtSim, txtNao) {
+    return new Promise((resolve) => {
+        document.getElementById('conf-title').textContent = titulo;
+        document.getElementById('conf-msg').textContent = mensagem;
+        document.getElementById('conf-yes').textContent = txtSim || "Sim";
+        document.getElementById('conf-no').textContent = txtNao || "Não";
+        
+        resolveConfirm = resolve;
+        
+        // Abre especificamente sem anular a promessa atual
+        document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+        document.getElementById('m-confirm').classList.add('active');
+        overlay.classList.add('active');
+    });
+}
+
+function fecharConfirmacao(resposta) {
+    if (resolveConfirm) {
+        resolveConfirm(resposta);
+        resolveConfirm = null;
+    }
+    document.getElementById('m-confirm').classList.remove('active');
+    overlay.classList.remove('active');
+}
+
+// ═══════════════════════════════════════════
+// MOTOR BTRETY
+// ═══════════════════════════════════════════
+function clog(msg, color) {
+    const d = document.createElement('div');
+    let t = String(msg).replace(/\.\.([\w]+)\.\./g, (_, v) =>
+        vars[v] !== undefined ? vars[v] : `..${v}..`
+    );
+    t = t.replace(/§colorhex=(#[0-9A-Fa-f]{3,6})§/g, '</span><span style="color:$1">');
+    t = t.replace(/§§/g, '</span>');
+    const col = color || globalColor || '#ddd';
+    d.innerHTML = `<span style="color:${col}">${t}</span>`;
+    cout.appendChild(d);
+    cout.scrollTop = cout.scrollHeight;
+}
+
+async function waitInput() {
+    cinArea.style.display = 'flex';
+    cinEl.focus();
+    return new Promise(r => { resolveInput = r; });
+}
+
+cinEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && resolveInput) {
+        const v = cinEl.value; cinEl.value = '';
+        cinArea.style.display = 'none';
+        resolveInput(v); resolveInput = null;
+    }
+});
+
+function getRnmMap() {
+    const lines = editor.value.split('\n');
+    const last = lines[lines.length - 1].trim();
+    if (!last.startsWith('rnm ')) return {};
+    const map = {};
+    last.slice(4).split(';').forEach(p => {
+        const [a, b] = p.trim().split('=');
+        if (a && b) map[a.trim()] = b.trim();
+    });
+    return map;
+}
+
+async function runLine(raw) {
+    const rnm = getRnmMap();
+    let l = raw.trim();
+    for (const [orig, novo] of Object.entries(rnm))
+        l = l.replace(new RegExp(`\\b${novo}\\b`, 'g'), orig);
+
+    if (!l || l.startsWith('//') || /^T\d+$/.test(l) || l.startsWith('rnm ')) return;
+
+    if (l.startsWith('escrever')) {
+        const m = l.match(/\("(.*?)"\)/s);
+        if (m) clog(m[1]);
+        return;
+    }
+    if (l.startsWith('limpar')) { cout.innerHTML = ''; return; }
+    if (l.startsWith('cor')) {
+        const m = l.match(/\(([^)]+)\)/);
+        if (m) globalColor = m[1].trim();
+        return;
+    }
+    if (l.startsWith('digitar')) {
+        const mV = l.match(/digitar\s*<([^>]+)>\s*=\s*\((\w+)\)/);
+        const mS = l.match(/digitar\s*=\s*\((\w+)\)/);
+        if (mV) {
+            const allowed = mV[1].split(',').map(s => s.trim());
+            const varName = mV[2];
+            while (true) {
+                const inp = await waitInput();
+                if (allowed.includes(inp)) { vars[varName] = inp; break; }
+                clog(`[Erro] "${inp}" está invalido, escreva ${allowed.map(a=>`'${a}'`).join(', ')} para continuar`, '#ff5555');
+            }
+        } else if (mS) {
+            vars[mS[1]] = await waitInput();
+        }
+        return;
+    }
+    if (l.startsWith('data')) {
+        const now = new Date();
+        const mR = l.match(/data\(registrar=([hdma])\)\s+(\w+)/);
+        if (mR) {
+            const map = { h: now.getHours(), d: now.getDate(), m: now.getMonth()+1, a: now.getFullYear() };
+            vars[mR[2]] = map[mR[1]];
+        } else {
+            clog(now.toLocaleTimeString());
+        }
+        return;
+    }
+    if (l.startsWith('variavel')) {
+        const m = l.match(/variavel\s+(\w+)\s*=\s*(.*)/);
+        if (m) vars[m[1]] = m[2].replace(/^"|"$/g, '').trim();
+        return;
+    }
+    if (l.startsWith('calc')) {
+        const m = l.match(/calc\((.+?)\s*=\s*(.+)\)/);
+        if (m) {
+            const expr = m[2].replace(/\b([a-zA-Z_]\w*)\b/g, v =>
+                vars[v] !== undefined ? vars[v] : v
+            );
+            try { vars[m[1].trim()] = eval(expr); }
+            catch { clog('[Erro no calc] Expressão inválida.', '#ff5555'); }
+        }
+        return;
+    }
+    if (l.startsWith('esperar')) {
+        const m = l.match(/\((\d+)\)/);
+        if (m) await new Promise(r => setTimeout(r, +m[1]));
+        return;
+    }
+    if (l.startsWith('terminal')) {
+        clog("── MODO TERMINAL ── (digite 'sair' para encerrar)");
+        while (true) {
+            const cmd = await waitInput();
+            if (cmd.toLowerCase() === 'sair') break;
+            await runLine(cmd);
+        }
+        return;
+    }
+    if (l.startsWith('sortear')) {
+        const m = l.match(/sortear\s*\(\s*(\d+)\s*;\s*(\d+)\s*-\s*(\d+)\s*\)\s*=\s*(\w+)/);
+        if (m) {
+            const qtd = parseInt(m[1]);
+            const min = parseInt(m[2]);
+            const max = parseInt(m[3]);
+            const varName = m[4];
+            if (qtd < 1 || min > max || qtd > (max - min + 1)) {
+                clog('[Erro] Sortear: Parâmetros inválidos.', '#ff5555');
+            } else {
+                const pool = [];
+                for (let k = min; k <= max; k++) pool.push(k);
+                const result = [];
+                for (let k = 0; k < qtd; k++) {
+                    const idx = Math.floor(Math.random() * pool.length);
+                    result.push(pool.splice(idx, 1)[0]);
+                }
+                result.sort((a, b) => a - b);
+                vars[varName] = result.join(', ');
+            }
+        } else {
+            clog('[Erro] Sortear: sortear(qtd; min-max) = variavel', '#ff5555');
+        }
+        return;
+    }
+}
+
+async function executarBtrety() {
+    cout.innerHTML = ''; vars = {}; globalColor = null;
+    addHist(editor.value);
+    const rnm = getRnmMap();
+    const raw = editor.value.split('\n');
+    const lines = raw.map(l => {
+        let r = l;
+        for (const [orig, novo] of Object.entries(rnm))
+            r = r.replace(new RegExp(`\\b${novo}\\b`, 'g'), orig);
+        return r;
+    });
+
+    const topics = {};
+    lines.forEach((l, i) => { if (/^T\d+$/.test(l.trim())) topics[l.trim()] = i; });
+
+    for (let i = 0; i < lines.length; i++) {
+        const l = lines[i].trim();
+        if (!l || l.startsWith('//') || /^T\d+$/.test(l) || l.startsWith('rnm ')) continue;
+        if (l === '}') continue;
+
+        if (/^se\s*\(/.test(l)) {
+            const m = l.match(/se\s*\((.+?)\)\s*\{?/);
+            let pass = false;
+            if (m) {
+                let cond = m[1].replace(/\b([a-zA-Z_]\w*)\b/g, v =>
+                    vars[v] !== undefined ? (isNaN(vars[v]) ? `"${vars[v]}"` : vars[v]) : `"${v}"`
+                );
+                try { pass = !!eval(cond); } catch {}
+            }
+            if (!pass) {
+                let depth = 0;
+                for (; i < lines.length; i++) {
+                    if (lines[i].includes('{')) depth++;
+                    if (lines[i].includes('}')) { depth--; if (depth <= 0) break; }
+                }
+                let j = i + 1;
+                while (j < lines.length && !lines[j].trim()) j++;
+                if (lines[j] && /^senao/.test(lines[j].trim())) { i = j; }
+            }
+            continue;
+        }
+        if (/^senao/.test(l)) {
+            let depth = 0;
+            for (; i < lines.length; i++) {
+                if (lines[i].includes('{')) depth++;
+                if (lines[i].includes('}')) { depth--; if (depth <= 0) break; }
+            }
+            continue;
+        }
+
+        if (/^rT\d+$/.test(l)) {
+            const t = l.slice(1);
+            if (topics[t] !== undefined) { i = topics[t]; continue; }
+        }
+
+        await runLine(l);
+    }
+}
+
+// ═══════════════════════════════════════════
+// HIGHLIGHT E SCROLL SYNC
+// ═══════════════════════════════════════════
+function syncScroll() {
+    hlc.parentElement.scrollTop  = editor.scrollTop;
+    hlc.parentElement.scrollLeft = editor.scrollLeft;
+    lnums.scrollTop = editor.scrollTop;
+    rg.style.marginTop = -editor.scrollTop + 'px';
+}
+
+function hlLine(line) {
+    if (!line) return '';
+    let h = line.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+    if (/^\s*\/\//.test(h)) return h.replace(/(\/\/.*)/, '<span class="c">$1</span>');
+    h = h.replace(/(\/\/.*)$/, '<span class="c">$1</span>');
+
+    let colorTokens = [];
+    h = h.replace(/§colorhex=(#[0-9A-Fa-f]{3,6})§/g, (match, col) => {
+        let token = `___COLOR_TOKEN_${colorTokens.length}___`;
+        let html = `<span style="color:#c792ea;font-weight:bold">§colorhex=</span>` +
+                   `<span style="color:${col};text-shadow:0 0 5px ${col}88;font-weight:bold">${col}</span>` +
+                   `<span style="color:#c792ea;font-weight:bold">§</span>`;
+        colorTokens.push(html);
+        return token;
+    });
+
+    h = h.replace(/"([^"]*)"/g, '<span class="s">"$1"</span>');
+    h = h.replace(/\b(rT\d+|T\d+)\b/g, '<span class="tp">$1</span>');
+
+    KEYWORDS.forEach(k => {
+        h = h.replace(new RegExp(`(?<![a-zA-Z0-9_])(${k})(?![a-zA-Z0-9_])`, 'g'),
+            '<span class="k">$1</span>');
+    });
+
+    h = h.replace(/(?<![#\w])(\b\d+\.?\d*\b)/g, '<span class="n">$1</span>');
+
+    colorTokens.forEach((html, i) => {
+        h = h.replace(`___COLOR_TOKEN_${i}___`, html);
+    });
+
+    return h;
+}
+
+function updateEditor() {
+    const lines = editor.value.split('\n');
+
+    lnums.innerHTML = lines.map((_, i) => {
+        for (const [s, e] of collapsed)
+            if (i > s && i <= e) return '';
+        return i + 1;
+    }).join('<br>');
+
+    hlc.innerHTML = lines.map((line, i) => {
+        let hidden = false;
+        for (const [s, e] of collapsed)
+            if (i > s && i <= e) { hidden = true; break; }
+        return `<span class="hl-line${hidden?' hidden':''}" data-i="${i}">${hlLine(line)}</span>`;
+    }).join('');
+
+    buildCollapseGutter(lines);
+    if (feat.sugerir) refreshAC();
+    else hideAC();
+    
+    syncScroll();
+
+    if (editor.value !== lastSavedContent) {
+        isSaved = false;
+    } else {
+        isSaved = true;
+    }
+}
+
+function buildCollapseGutter(lines) {
+    rg.innerHTML = '';
+    const padTop = 25, lh = 27.2;
+
+    lines.forEach((line, i) => {
+        const t = line.trim();
+        let end = -1;
+
+        if (/^se\s*\(/.test(t)) {
+            let d = 0;
+            for (let j = i; j < lines.length; j++) {
+                if (lines[j].includes('{')) d++;
+                if (lines[j].includes('}')) { d--; if (d === 0) { end = j; break; } }
+            }
+        } else if (/^T\d+$/.test(t)) {
+            for (let j = i + 1; j < lines.length; j++) {
+                if (/^T\d+$/.test(lines[j].trim()) || j === lines.length - 1) {
+                    end = j - (/^T\d+$/.test(lines[j].trim()) ? 1 : 0);
+                    break;
+                }
+            }
+        }
+
+        if (end > i) {
+            const btn = document.createElement('button');
+            btn.className = 'cb';
+            btn.style.top = (padTop + i * lh + lh / 2 - 6.5) + 'px';
+            const isCol = collapsed.has(i);
+            btn.textContent = isCol ? '▶' : '▼';
+            btn.title = isCol ? 'Expandir' : 'Recolher';
+            btn.onclick = () => {
+                collapsed.has(i) ? collapsed.delete(i) : collapsed.set(i, end);
+                updateEditor();
+            };
+            rg.appendChild(btn);
+        }
+    });
+}
+
+// ═══════════════════════════════════════════
+// EDITOR EVENTS
+// ═══════════════════════════════════════════
+editor.addEventListener('input', () => { collapsed.clear(); updateEditor(); });
+editor.addEventListener('scroll', syncScroll);
+
+editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        if (acBox.style.display === 'block') { acceptAC(acItems[0]); return; }
+        const s = editor.selectionStart;
+        editor.value = editor.value.slice(0, s) + '    ' + editor.value.slice(editor.selectionEnd);
+        editor.selectionStart = editor.selectionEnd = s + 4;
+        updateEditor();
+        return;
+    }
+    if (acBox.style.display === 'block') {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const items = acBox.querySelectorAll('.ac-item');
+            let cur = [...items].findIndex(x => x.classList.contains('sel'));
+            items[cur]?.classList.remove('sel');
+            cur = (cur + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+            items[cur]?.classList.add('sel');
+            acItems[0] = items[cur]?.dataset.k;
+            return;
+        }
+        if (e.key === 'Enter') { e.preventDefault(); acceptAC(acItems[0]); return; }
+    }
+    if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault(); openSearch(); return;
+    }
+    if (e.key === 'Escape') { closeSearch(); hideAC(); }
+});
+
+// ═══════════════════════════════════════════
+// AUTOCOMPLETE & SNIPPETS
+// ═══════════════════════════════════════════
+const SNIPPETS = {
+    escrever: 'escrever("")',
+    digitar:  'digitar = (variavel)',
+    data:     'data(registrar=h) ',
+    esperar:  'esperar(1000)',
+    calc:     'calc(variavel = x + y)',
+    se:       'se (condição) {\n\n}',
+    senao:    'senao {\n\n}',
+    variavel: 'variavel nome = valor',
+    cor:      'cor(#FF8C00)',
+    terminal: 'terminal()',
+    limpar:   'limpar()',
+    sortear:  'sortear(6; 1-60) = variavel',
+};
+
+function refreshAC() {
+    const pos = editor.selectionStart;
+    const before = editor.value.slice(0, pos);
+    const m = before.match(/([a-zA-Z_]\w*)$/);
+    if (!m || m[1].length < 2) return hideAC();
+
+    const word = m[1];
+    const hits = Object.keys(SNIPPETS).filter(k => k.startsWith(word) && k !== word);
+    if (!hits.length) return hideAC();
+
+    acWord = word; acItems = hits;
+    acBox.innerHTML = hits.map((k, i) =>
+        `<div class="ac-item${i===0?' sel':''}" data-k="${k}" onclick="acceptAC('${k}')">` +
+        `<span class="ac-kw">${word}</span>${k.slice(word.length)}` +
+        `<span class="ac-hint">${SNIPPETS[k].replace(/\n/g,' ')}</span></div>`
+    ).join('');
+
+    const rect = editor.getBoundingClientRect();
+    const linesBefore = before.split('\n');
+    const col = linesBefore[linesBefore.length - 1].length;
+    const row = linesBefore.length - 1;
+    acBox.style.left = Math.min(rect.left + 25 + col * 10.2, window.innerWidth - 370) + 'px';
+    acBox.style.top  = Math.min(rect.top + 25 + row * 27.2 - editor.scrollTop + 27.2, window.innerHeight - 150) + 'px';
+    acBox.style.display = 'block';
+}
+
+function hideAC() { acBox.style.display = 'none'; }
+
+function acceptAC(key) {
+    if (!key) return;
+    const snip = SNIPPETS[key];
+    const pos = editor.selectionStart;
+    const before = editor.value.slice(0, pos - acWord.length);
+    const after  = editor.value.slice(pos);
+    editor.value = before + snip + after;
+    const ci = snip.indexOf('""') !== -1 ? snip.indexOf('""') + 1 :
+               snip.indexOf('(')  !== -1 ? snip.indexOf('(')  + 1 : snip.length;
+    editor.selectionStart = editor.selectionEnd = before.length + ci;
+    hideAC(); updateEditor();
+}
+
+document.addEventListener('click', e => {
+    if (!acBox.contains(e.target) && e.target !== editor) hideAC();
+});
+
+// ═══════════════════════════════════════════
+// GUIA DE SINTAXE (tooltip)
+// ═══════════════════════════════════════════
+const GUIDE = {
+    escrever: { d:'Exibe texto no console. Suporta cores e variáveis.', ex:'escrever("Olá!")' },
+    digitar:  { d:'Lê entrada do usuário e salva em variável.', ex:'digitar = (nome)' },
+    data:     { d:'Exibe ou registra informações de data/hora.', ex:'data()\ndata(registrar=h) hora' },
+    esperar:  { d:'Pausa a execução pelo tempo em milissegundos.', ex:'esperar(1000)' },
+    calc:     { d:'Realiza um cálculo matemático e salva.', ex:'calc(r = x + y * 2)' },
+    se:       { d:'Executa o bloco se a condição for verdadeira.', ex:'se (x == 10) {\n  escrever("ok")\n}' },
+    senao:    { d:'Bloco executado quando o se anterior for falso.', ex:'senao {\n  escrever("não")\n}' },
+    variavel: { d:'Cria ou altera o valor de uma variável.', ex:'variavel nome = "Arauj"' },
+    limpar:   { d:'Limpa todo o histórico do console.', ex:'limpar()' },
+    terminal: { d:'Modo de entrada interativa. Digite "sair" para encerrar.', ex:'terminal()' },
+    sortear:  { d:'Sorteia N números únicos entre min e max, sem repetição.', ex:'sortear(6; 1-60) = numeros' },
+    cor:      { d:'Define a cor global do texto no console.', ex:'cor(#FF8C00)' },
+};
+
+editor.addEventListener('mousemove', e => {
+    if (!feat.guia) { tip.style.display = 'none'; return; }
+    const rect   = editor.getBoundingClientRect();
+    const lineH  = parseFloat(getComputedStyle(editor).lineHeight) || 27.2;
+    const padTop = parseFloat(getComputedStyle(editor).paddingTop)  || 25;
+    const padL   = parseFloat(getComputedStyle(editor).paddingLeft) || 25;
+    const charW  = 10.2;
+    const row = Math.floor((e.clientY - rect.top  - padTop + editor.scrollTop)  / lineH);
+    const col = Math.floor((e.clientX - rect.left - padL   + editor.scrollLeft) / charW);
+    const lines = editor.value.split('\n');
+    if (row < 0 || row >= lines.length) { tip.style.display = 'none'; return; }
+    const line = lines[row];
+    let s = col, en = col;
+    while (s  > 0           && /[a-zA-Z]/.test(line[s - 1])) s--;
+    while (en < line.length && /[a-zA-Z]/.test(line[en]))    en++;
+    const word = line.slice(s, en);
+    const info = GUIDE[word];
+    if (!info) { tip.style.display = 'none'; return; }
+    tip.innerHTML = `<b>${word}</b><br>${info.d}<code>${info.ex.replace(/\n/g,'<br>')}</code>`;
+    tip.style.display = 'block';
+    tip.style.left = Math.min(e.clientX + 16, window.innerWidth  - 320) + 'px';
+    tip.style.top  = Math.min(e.clientY + 14, window.innerHeight - 120) + 'px';
+});
+editor.addEventListener('mouseleave', () => tip.style.display = 'none');
+
+// ═══════════════════════════════════════════
+// SEARCH E OUTROS MODAIS
+// ═══════════════════════════════════════════
+function openSearch() { document.getElementById('search-bar').style.display = 'flex'; document.getElementById('srch-in').focus(); document.getElementById('srch-in').select(); }
+function closeSearch() { document.getElementById('search-bar').style.display = 'none'; document.getElementById('srch-cnt').textContent = ''; srchMatches = []; srchIdx = -1; }
+document.getElementById('srch-in').addEventListener('input', function () {
+    const q = this.value; srchMatches = [];
+    if (!q) { document.getElementById('srch-cnt').textContent = ''; return; }
+    let p = 0; while ((p = editor.value.indexOf(q, p)) !== -1) { srchMatches.push(p); p += q.length; }
+    srchIdx = srchMatches.length ? 0 : -1;
+    document.getElementById('srch-cnt').textContent = srchMatches.length ? `1/${srchMatches.length}` : '0 resultados';
+    jumpToSrch();
+});
+document.getElementById('srch-in').addEventListener('keydown', e => { if (e.key === 'Enter') e.shiftKey ? srchMove(-1) : srchMove(1); if (e.key === 'Escape') closeSearch(); });
+function srchMove(dir) { if (!srchMatches.length) return; srchIdx = (srchIdx + dir + srchMatches.length) % srchMatches.length; document.getElementById('srch-cnt').textContent = `${srchIdx+1}/${srchMatches.length}`; jumpToSrch(); }
+function jumpToSrch() {
+    if (srchIdx < 0 || !srchMatches.length) return;
+    const q  = document.getElementById('srch-in').value; const pos = srchMatches[srchIdx];
+    editor.focus(); editor.setSelectionRange(pos, pos + q.length);
+    const line = editor.value.slice(0, pos).split('\n').length - 1; editor.scrollTop = Math.max(0, line * 27.2 - 100);
+}
+function addRnm() { const list = document.getElementById('rnm-list'); const row  = document.createElement('div'); row.className = 'rnm-row'; row.innerHTML = `<select>${KEYWORDS.map(k=>`<option>${k}</option>`).join('')}</select><span style="color:#555">→</span><input type="text" placeholder="novo nome"><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#666;cursor:pointer;font-size:16px;">✕</button>`; list.appendChild(row); }
+function aplicarRnm() { const pairs = []; document.querySelectorAll('#rnm-list .rnm-row').forEach(r => { const orig = r.querySelector('select').value; const novo = r.querySelector('input').value.trim(); if (novo) pairs.push(`${orig}=${novo}`); }); if (!pairs.length) return; const lines = editor.value.split('\n').filter(l => !l.trim().startsWith('rnm ')); lines.push('rnm ' + pairs.join('; ')); editor.value = lines.join('\n'); collapsed.clear(); updateEditor(); fecharModais(); }
+
+// ═══════════════════════════════════════════
+// ARQUIVO: NOVO, SALVAR, ABRIR E SAIR
+// ═══════════════════════════════════════════
+async function novoArquivo() {
+    if (!isSaved) {
+        const salvar = await pedirConfirmacao(
+            "Mudanças Não Salvas", 
+            "Você tem mudanças não salvas, gostaria de salvar elas antes de fechar o arquivo atual?",
+            "Salvar", "Descartar"
+        );
+        if (salvar) await salvarComo();
+    }
+    editor.value = ''; 
+    lastSavedContent = '';
+    isSaved = true;
+    collapsed.clear(); updateEditor();
+}
+
+async function abrirArquivo() {
+    if (!isSaved) {
+        const salvar = await pedirConfirmacao(
+            "Mudanças Não Salvas", 
+            "Você tem mudanças não salvas, gostaria de salvar elas antes de abrir outro arquivo?",
+            "Salvar", "Descartar"
+        );
+        if (salvar) await salvarComo();
+    }
+    hiddenFileInput.click();
+}
+
+hiddenFileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        editor.value = ['py','java','cpp'].includes(ext)
+            ? transpilar(ev.target.result, ext)
+            : ev.target.result;
+        lastSavedContent = editor.value;
+        isSaved = true;
+        collapsed.clear(); updateEditor();
+        hiddenFileInput.value = ""; // Reseta o input para permitir carregar o mesmo arquivo depois
+    };
+    reader.readAsText(file);
+});
+
+async function salvarComo() {
+    const c = editor.value;
+    if (window.showSaveFilePicker) {
+        try {
+            const h = await window.showSaveFilePicker({ suggestedName: 'projeto.Brt', types: [{ description: 'Arquivo Bcode', accept: { 'text/plain': ['.Brt','.brt'] } }] });
+            const w = await h.createWritable(); await w.write(c); await w.close();
+            lastSavedContent = c; isSaved = true; return;
+        } catch(e) { if (e.name === 'AbortError') return; }
+    }
+    Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([c], {type:'text/plain'})), download: 'projeto.Brt' }).click();
+    lastSavedContent = c; isSaved = true;
+}
+
+// Sair do programa pelo menu (Aciona o modal bonitão)
+async function sairPrograma() {
+    if (!isSaved) {
+        const salvar = await pedirConfirmacao(
+            "Saindo do Btrety Studio", 
+            "Você tem mudanças não salvas, gostaria de salvar elas antes de fechar o programa?",
+            "Salvar", "Fechar"
+        );
+        if (salvar) await salvarComo();
+    }
+    window.close();
+}
+
+// Bloqueio do botão nativo (X) do sistema
+window.addEventListener('beforeunload', function (e) {
+    if (!isSaved) {
+        // Isso mostra a caixa nativa "Deseja sair do site?" no [ X ] do Chromium/Nativefier
+        e.preventDefault();
+        e.returnValue = 'Você tem mudanças não salvas. Gostaria de salvar antes de sair?';
+        return e.returnValue;
+    }
+});
+
+// ═══════════════════════════════════════════
+// TRANSPILER, UTILS E PRESETS (CATÁLOGO)
+// ═══════════════════════════════════════════
+function transpilar(raw, ext) { const out = raw.split('\n').map(l => { const t = l.trim(); l = l.replace(/print\(|System\.out\.println\(|cout\s*<<\s*/g, 'escrever('); if (t.includes('=') && !/^(variavel|escrever|digitar|limpar|data|cor)/.test(t)) { l = l.replace(/(int|String|var|let|float|double|auto)\s+/, ''); l = l.replace(/^(\s*)(\w+)\s*=\s*(.*)/, '$1variavel $2 = $3'); } return l; }); return `// Btrety Transpiler — ${ext.toUpperCase()} → Bcode\n` + out.join('\n'); }
+function analisarCodigo() { const file = document.getElementById('f-in').files[0]; if (!file) return; const reader = new FileReader(); reader.onload = e => { const ext = file.name.split('.').pop().toLowerCase(); editor.value = transpilar(e.target.result, ext); collapsed.clear(); updateEditor(); fecharModais(); }; reader.readAsText(file); }
+function limparConsole() { cout.innerHTML = ''; }
+function toggleFeat(f) { feat[f] = !feat[f]; const lbl = document.getElementById(`lbl-${f}`); if (lbl) lbl.textContent = feat[f] ? '✓' : ''; if (!feat.guia) tip.style.display = 'none'; if (!feat.sugerir) hideAC(); }
+const resizer = document.getElementById('resizer'); let resizing = false; resizer.addEventListener('mousedown', () => resizing = true); document.addEventListener('mousemove', e => { if (!resizing) return; const con = document.getElementById('console-container'); const total = document.querySelector('.main-container').offsetWidth; con.style.width = Math.max(180, Math.min(total - e.clientX - 4, total - 200)) + 'px'; }); document.addEventListener('mouseup', () => resizing = false);
+
+let execHist = [];
+function addHist(code) { execHist.unshift({ time: new Date().toLocaleTimeString(), preview: code.split('\n').slice(0,2).join(' | ').slice(0,60) }); if (execHist.length > 20) execHist.pop(); }
+function renderHist() { const el = document.getElementById('hist-list'); if (!el) return; if (!execHist.length) { el.innerHTML = '<p style="color:#555;font-size:13px">Nenhuma execução ainda.</p>'; return; } el.innerHTML = execHist.map(h => `<div style="padding:7px 8px;border-bottom:1px solid #1e1e1e;"><span style="color:#555;font-size:11px">[${h.time}]</span><span style="color:#888;font-size:12px;margin-left:8px;font-family:Consolas,monospace">${h.preview}</span></div>`).join(''); }
+function renderVars() { const el = document.getElementById('vars-list'); if (!el) return; const entries = Object.entries(vars); if (!entries.length) { el.innerHTML = '<p style="color:#555;font-size:13px">Nenhuma variável definida.</p>'; return; } el.innerHTML = `<table><tr><th>Nome</th><th>Valor</th></tr>${entries.map(([k,v]) => `<tr><td>${k}</td><td style="color:#fff">${String(v).slice(0,80)}</td></tr>`).join('')}</table>`; }
+
+let catalog = JSON.parse(localStorage.getItem('btrety_catalog') || '[]');
+function saveCatalog() { localStorage.setItem('btrety_catalog', JSON.stringify(catalog)); }
+function renderCatalogo() { const el = document.getElementById('cat-list'); if (!el) return; if (!catalog.length) { el.innerHTML = '<p style="color:#555;font-size:13px;padding:10px 0">Nenhum preset ainda. Use o + para adicionar.</p>'; return; } el.innerHTML = catalog.map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e1e1e;"><div style="flex:1;cursor:pointer" onclick="insertPreset(${i})"><div style="color:#ccc;font-size:13px;font-weight:bold">${p.name}</div><div style="color:#555;font-size:11px;font-family:Consolas,monospace;margin-top:2px">${p.code.split('\n')[0].slice(0,50)}</div></div><button onclick="deletePreset(${i})" style="background:none;border:none;color:#444;cursor:pointer;font-size:16px;padding:2px 6px;" title="Remover">✕</button></div>`).join(''); }
+function insertPreset(i) { const code = catalog[i].code; const pos = editor.selectionStart; const before = editor.value.slice(0, pos); const after = editor.value.slice(pos); const prefix = before.length > 0 && !before.endsWith('\n') ? '\n' : ''; editor.value = before + prefix + code + '\n' + after; editor.selectionStart = editor.selectionEnd = pos + prefix.length + code.length + 1; editor.focus(); collapsed.clear(); updateEditor(); fecharModais(); }
+function deletePreset(i) { catalog.splice(i, 1); saveCatalog(); renderCatalogo(); }
+function abrirAddPreset() { document.getElementById('cat-form').style.display = 'block'; document.getElementById('cat-name').focus(); const sel = editor.value.slice(editor.selectionStart, editor.selectionEnd).trim(); if (sel) document.getElementById('cat-code').value = sel; }
+function salvarPreset() { const name = document.getElementById('cat-name').value.trim(); const code = document.getElementById('cat-code').value; if (!name || !code) return; catalog.push({ name, code }); saveCatalog(); document.getElementById('cat-name').value = ''; document.getElementById('cat-code').value = ''; document.getElementById('cat-form').style.display = 'none'; renderCatalogo(); }
+
+// Init
+updateEditor();
+</script>
+
+<div id="m-catalogo" class="modal">
+  <div class="modal-h"><span>Catálogo de Presets</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <p style="font-size:12px;color:#555">Clique num preset para inserir no cursor. Selecione código no editor antes de adicionar para pré-preencher.</p>
+  <div id="cat-list" style="margin-top:10px;"></div>
+  <div id="cat-form" style="display:none;margin-top:14px;border-top:1px solid #2a2a2a;padding-top:14px;">
+    <input id="cat-name" placeholder="Nome do preset" autocomplete="off"
+           style="width:100%;background:#0e0e0e;border:1px solid #333;color:#ccc;padding:8px;font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box;">
+    <textarea id="cat-code" placeholder="Código..." rows="6" spellcheck="false"
+              style="width:100%;background:#0e0e0e;border:1px solid #333;color:#ccc;padding:8px;font-size:13px;font-family:Consolas,monospace;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn" style="flex:1" onclick="salvarPreset()">Salvar</button>
+      <button class="btn btn-dark" style="flex:1" onclick="document.getElementById('cat-form').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+  <button onclick="abrirAddPreset()" title="Novo preset"
+          style="position:sticky;bottom:0;float:right;margin-top:14px;width:36px;height:36px;border-radius:50%;background:var(--accent);border:none;color:#000;font-size:22px;font-weight:bold;cursor:pointer;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.5);">+</button>
+</div>
+
+<div id="m-historico" class="modal">
+  <div class="modal-h"><span>Histórico de Execução</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <p style="font-size:12px;color:#555;margin-bottom:8px">Últimas 20 execuções desta sessão.</p>
+  <div id="hist-list"></div>
+  <button class="btn btn-w btn-dark" onclick="execHist=[];renderHist();" style="margin-top:10px;">Limpar</button>
+</div>
+
+<div id="m-variaveis" class="modal">
+  <div class="modal-h"><span>Inspecionar Variáveis</span><span onclick="fecharModais()" style="cursor:pointer">✕</span></div>
+  <p style="font-size:12px;color:#555;margin-bottom:8px">Variáveis do último programa executado.</p>
+  <div id="vars-list"></div>
+</div>
+</body>
+</html>
