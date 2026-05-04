@@ -18,7 +18,7 @@ O **Btrety Studio** é um ambiente de desenvolvimento (IDE) leve, projetado para
 1. Instale o Nativefier pelo site oficial: `https://github.com/nativefier/nativefier`
 2. Após instalar, abra o Explorador de Arquivos e crie uma pasta com qualquer nome, clique com o botão direito em "Abrir no Terminal"
 3. Depois de abir o terminal, cole este comando: `nativefier --name "Btrety Studio" "https://arauj0-o.github.io/Btrety-Studio/"`
-4. O arquivo será instalado na pasta que você escolheu.
+4. Ele criará uma pasta, entre nela e execute o arquvio `Btrety Studio.exe`, ele será instalado na pasta que você escolheu.
 
 **Usando pelo navegador**
 
