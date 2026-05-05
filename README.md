@@ -24,7 +24,7 @@ O **Btrety Studio** é um ambiente de desenvolvimento (IDE) leve, projetado para
 **Usando pelo navegador**
 
 1. Abra uma nova aba no navegador e cole esse url: `https://arauj0-o.github.io/Btrety-Studio/`
-2. Começe a programar.
+2. Comece a programar.
 
 ### 📜 Licença e Observações
 Distribuído sob a Licença MIT. Consulte o arquivo `LICENÇA.txt` para obter mais detalhes.
