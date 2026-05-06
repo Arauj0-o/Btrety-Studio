@@ -26,8 +26,18 @@ O **Btrety Studio** é um ambiente de desenvolvimento (IDE) leve, projetado para
 1. Abra uma nova aba no navegador e cole esse url: `https://arauj0-o.github.io/Btrety-Studio/`
 2. Comece a programar.
 
+### 🔜 Futuras adições
+Oque estiver aqui são as coisas que quero adicionar ou estou testando para futuramente ao Btrety Studio:
+
+1. Conexão de dois projetos:
+Por meio de um ID, eles compartilhariam variaveis, podendo criar fazer muitas coisas novas, além de jogos multiplayer.
+2. função.propriedade:
+Iria pegar alguma propriedade (como o tamanho) de uma variavel, útil para medir o tamanho das variaveis.
+3. Abas:
+Elas serviriam como múltiplos projetos sem precisar ter um monte de Btrety Studio abertos.
+
 ### 📜 Licença e Observações
-Distribuído sob a Licença MIT. Consulte o arquivo `LICENCE.txt` para obter mais detalhes.
+Distribuído sob a Licença MIT. Consulte o arquivo `LICENCE` para obter mais detalhes.
 
 ---
 Desenvolvido por **Arauj⌀** | Publicado em 01/05/2026
