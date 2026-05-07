@@ -36,8 +36,5 @@ Iria pegar alguma propriedade (como o tamanho) de uma variavel, útil para medir
 3. Abas:
 Elas serviriam como múltiplos projetos sem precisar ter um monte de Btrety Studio abertos.
 
-### 📜 Licença e Observações
-Distribuído sob a Licença MIT. Consulte o arquivo `LICENCE` para obter mais detalhes.
-
 ---
 Desenvolvido por **Arauj⌀** | Publicado em 01/05/2026
